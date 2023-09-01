@@ -2243,3 +2243,6 @@ operations:
     batch: Batch
     batch_size: Batch Size
     cache: Cache
+
+# My custom translations
+customerAlias: Customer Alias
