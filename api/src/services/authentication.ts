@@ -61,6 +61,8 @@ export class AuthenticationService {
 			throw err;
 		}
 
+
+		// HB_TODO: incluir o customer na query abaixo
 		const user = await this.knex
 			.select<User & { tfa_secret: string | null }>(
 				'u.id',
@@ -82,12 +84,18 @@ export class AuthenticationService {
 			.where('u.id', userId)
 			.first();
 
+		// HB TODO: Essa linha é só para teste. Remover depois.
+		if (user) {
+			user.customer = payload["customerAlias"];
+		}
+
 		const updatedPayload = await emitter.emitFilter(
 			'auth.login',
 			payload,
 			{
 				status: 'pending',
 				user: user?.id,
+				customer: user?.customer,
 				provider: providerName,
 			},
 			{
@@ -104,6 +112,7 @@ export class AuthenticationService {
 					payload: updatedPayload,
 					status,
 					user: user?.id,
+					customer: user?.customer,
 					provider: providerName,
 				},
 				{
@@ -179,6 +188,7 @@ export class AuthenticationService {
 
 		const tokenPayload = {
 			id: user.id,
+			customer: user.customer,
 			role: user.role,
 			app_access: user.app_access,
 			admin_access: user.admin_access,
@@ -211,6 +221,7 @@ export class AuthenticationService {
 		await this.knex('directus_sessions').insert({
 			token: refreshToken,
 			user: user.id,
+			customer: user?.customer,
 			expires: refreshTokenExpiration,
 			ip: this.accountability?.ip,
 			user_agent: this.accountability?.userAgent,
@@ -223,6 +234,7 @@ export class AuthenticationService {
 			await this.activityService.createOne({
 				action: Action.LOGIN,
 				user: user.id,
+				customer: user.customer,
 				ip: this.accountability.ip,
 				user_agent: this.accountability.userAgent,
 				origin: this.accountability.origin,

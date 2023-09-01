@@ -24,6 +24,7 @@ export class LocalAuthDriver extends AuthDriver {
 			throw new InvalidCredentialsError();
 		}
 
+		// HB_TODO: neste ponto, incluir na query a verificação do customerAlias associado ao user
 		const user = await this.knex
 			.select('id')
 			.from('directus_users')
@@ -54,7 +55,7 @@ export function createLocalAuthRouter(provider: string): Router {
 	const userLoginSchema = Joi.object({
 		email: Joi.string().email().required(),
 		password: Joi.string().required(),
-		customer: Joi.string().required(),
+		customerAlias: Joi.string().required(),
 		mode: Joi.string().valid('cookie', 'json'),
 		otp: Joi.string(),
 	}).unknown();

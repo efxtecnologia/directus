@@ -14,6 +14,7 @@ export interface User {
 	password: string | null;
 	status: 'active' | 'suspended' | 'invited';
 	role: string | null;
+	customer: string | null;
 	provider: string;
 	external_identifier: string | null;
 	auth_data: string | Record<string, unknown> | null;
