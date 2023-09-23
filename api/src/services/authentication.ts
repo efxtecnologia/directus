@@ -200,6 +200,7 @@ export class AuthenticationService {
 			{
 				status: 'pending',
 				user: user?.id,
+				customer: user?.customer,
 				provider: providerName,
 				type: 'login',
 			},
@@ -273,6 +274,7 @@ export class AuthenticationService {
 		const record = await this.knex
 			.select({
 				session_expires: 's.expires',
+				user_customer: 's.customer',
 				user_id: 'u.id',
 				user_first_name: 'u.first_name',
 				user_last_name: 'u.last_name',
@@ -348,6 +350,7 @@ export class AuthenticationService {
 		const tokenPayload: DirectusTokenPayload = {
 			id: record.user_id,
 			role: record.role_id,
+			customer: record.user_customer,
 			app_access: record.role_app_access,
 			admin_access: record.role_admin_access,
 		};
@@ -373,6 +376,7 @@ export class AuthenticationService {
 			{
 				status: 'pending',
 				user: record.user_id,
+				customer: record.user_customer,
 				provider: record.user_provider,
 				type: 'refresh',
 			},
