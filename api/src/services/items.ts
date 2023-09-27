@@ -411,6 +411,10 @@ export class ItemsService<Item extends AnyItem = AnyItem> implements AbstractSer
 				  )
 				: query;
 
+		console.log("**** accountability");
+		console.log(this.accountability);
+		console.log(JSON.stringify({ customer: this?.accountability?.customer, collection: this.collection, updatedQuery }, null, 2));
+
 		let ast = await getASTFromQuery(this.collection, updatedQuery, this.schema, {
 			accountability: this.accountability,
 			// By setting the permissions action, you can read items using the permissions for another

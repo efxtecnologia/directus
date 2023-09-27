@@ -24,12 +24,24 @@ export class LocalAuthDriver extends AuthDriver {
 			throw new InvalidCredentialsError();
 		}
 
-		// HB_TODO: neste ponto, incluir na query a verificação do customerAlias associado ao user
-		const user = await this.knex
-			.select('id')
-			.from('directus_users')
-			.whereRaw('LOWER(??) = ?', ['email', payload['email'].toLowerCase()])
-			.first();
+		const sql = `
+			select
+				usr.id as id
+			from
+				directus_users usr
+			join
+				customers_directus_users xref
+				on xref.directus_users_id = usr.id
+			join
+				customers cus
+				on cus.id = xref.customers_id
+			where
+				lower(usr.email) = '${ payload['email'].toLowerCase() }' and
+					lower(cus.alias) = '${ payload['customerAlias'].toLowerCase() }'
+      limit 1`;
+
+		const rawUser = await this.knex.raw(sql);
+		const user = rawUser.rows[0];
 
 		if (!user) {
 			throw new InvalidCredentialsError();
