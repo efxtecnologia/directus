@@ -61,8 +61,6 @@ export class AuthenticationService {
 			throw err;
 		}
 
-
-		// HB_TODO: incluir o customer na query abaixo
 		const user = await this.knex
 			.select<User & { tfa_secret: string | null } & { customers_id: string }>(
 				'u.id',
