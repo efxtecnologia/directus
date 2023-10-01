@@ -64,7 +64,7 @@ export class AuthenticationService {
 
 		// HB_TODO: incluir o customer na query abaixo
 		const user = await this.knex
-			.select<User & { tfa_secret: string | null }>(
+			.select<User & { tfa_secret: string | null } & { customers_id: string }>(
 				'u.id',
 				'u.first_name',
 				'u.last_name',
@@ -77,17 +77,16 @@ export class AuthenticationService {
 				'u.tfa_secret',
 				'u.provider',
 				'u.external_identifier',
-				'u.auth_data'
+				'u.auth_data',
+				'c.id as customer'
 			)
 			.from('directus_users as u')
+			.join('customers_directus_users as j', 'u.id', 'j.directus_users_id')
+			.join('customers as c', 'c.id', 'j.customers_id')
 			.leftJoin('directus_roles as r', 'u.role', 'r.id')
 			.where('u.id', userId)
+			.andWhere('c.alias', payload["customerAlias"].toLowerCase())
 			.first();
-
-		// HB TODO: Essa linha é só para teste. Remover depois.
-		if (user) {
-			user.customer = payload["customerAlias"];
-		}
 
 		const updatedPayload = await emitter.emitFilter(
 			'auth.login',
