@@ -12,6 +12,7 @@ export async function getAccountabilityForToken(
 	if (!accountability) {
 		accountability = {
 			user: null,
+			customer: null,
 			role: null,
 			admin: false,
 			app: false,
@@ -21,8 +22,11 @@ export async function getAccountabilityForToken(
 	if (token) {
 		if (isDirectusJWT(token)) {
 			const payload = verifyAccessJWT(token, env['SECRET'] as string);
+			console.log("**** token payload");
+			console.log(payload);
 
 			accountability.role = payload.role;
+			accountability.customer = payload.customer;
 			accountability.admin = payload.admin_access === true || payload.admin_access == 1;
 			accountability.app = payload.app_access === true || payload.app_access == 1;
 

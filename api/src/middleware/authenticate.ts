@@ -13,6 +13,7 @@ import { getIPFromReq } from '../utils/get-ip-from-req.js';
 export const handler = async (req: Request, _res: Response, next: NextFunction) => {
 	const defaultAccountability: Accountability = {
 		user: null,
+		customer: null,
 		role: null,
 		admin: false,
 		app: false,

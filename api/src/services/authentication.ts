@@ -62,7 +62,7 @@ export class AuthenticationService {
 		}
 
 		const user = await this.knex
-			.select<User & { tfa_secret: string | null }>(
+			.select<User & { tfa_secret: string | null } & { customers_id: string }>(
 				'u.id',
 				'u.first_name',
 				'u.last_name',
@@ -75,11 +75,15 @@ export class AuthenticationService {
 				'u.tfa_secret',
 				'u.provider',
 				'u.external_identifier',
-				'u.auth_data'
+				'u.auth_data',
+				'c.id as customer'
 			)
 			.from('directus_users as u')
+			.join('customers_directus_users as j', 'u.id', 'j.directus_users_id')
+			.join('customers as c', 'c.id', 'j.customers_id')
 			.leftJoin('directus_roles as r', 'u.role', 'r.id')
 			.where('u.id', userId)
+			.andWhere('c.alias', payload["customerAlias"].toLowerCase())
 			.first();
 
 		const updatedPayload = await emitter.emitFilter(
@@ -88,6 +92,7 @@ export class AuthenticationService {
 			{
 				status: 'pending',
 				user: user?.id,
+				customer: user?.customer,
 				provider: providerName,
 			},
 			{
@@ -104,6 +109,7 @@ export class AuthenticationService {
 					payload: updatedPayload,
 					status,
 					user: user?.id,
+					customer: user?.customer,
 					provider: providerName,
 				},
 				{
@@ -179,6 +185,7 @@ export class AuthenticationService {
 
 		const tokenPayload = {
 			id: user.id,
+			customer: user.customer,
 			role: user.role,
 			app_access: user.app_access,
 			admin_access: user.admin_access,
@@ -190,6 +197,7 @@ export class AuthenticationService {
 			{
 				status: 'pending',
 				user: user?.id,
+				customer: user?.customer,
 				provider: providerName,
 				type: 'login',
 			},
@@ -211,6 +219,7 @@ export class AuthenticationService {
 		await this.knex('directus_sessions').insert({
 			token: refreshToken,
 			user: user.id,
+			customer: user?.customer,
 			expires: refreshTokenExpiration,
 			ip: this.accountability?.ip,
 			user_agent: this.accountability?.userAgent,
@@ -223,6 +232,7 @@ export class AuthenticationService {
 			await this.activityService.createOne({
 				action: Action.LOGIN,
 				user: user.id,
+				customer: user.customer,
 				ip: this.accountability.ip,
 				user_agent: this.accountability.userAgent,
 				origin: this.accountability.origin,
@@ -261,6 +271,7 @@ export class AuthenticationService {
 		const record = await this.knex
 			.select({
 				session_expires: 's.expires',
+				user_customer: 's.customer',
 				user_id: 'u.id',
 				user_first_name: 'u.first_name',
 				user_last_name: 'u.last_name',
@@ -336,6 +347,7 @@ export class AuthenticationService {
 		const tokenPayload: DirectusTokenPayload = {
 			id: record.user_id,
 			role: record.role_id,
+			customer: record.user_customer,
 			app_access: record.role_app_access,
 			admin_access: record.role_admin_access,
 		};
@@ -361,6 +373,7 @@ export class AuthenticationService {
 			{
 				status: 'pending',
 				user: record.user_id,
+				customer: record.user_customer,
 				provider: record.user_provider,
 				type: 'refresh',
 			},

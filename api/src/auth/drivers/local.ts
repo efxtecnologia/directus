@@ -20,11 +20,28 @@ export class LocalAuthDriver extends AuthDriver {
 			throw new InvalidCredentialsError();
 		}
 
-		const user = await this.knex
-			.select('id')
-			.from('directus_users')
-			.whereRaw('LOWER(??) = ?', ['email', payload['email'].toLowerCase()])
-			.first();
+		if (!payload["customerAlias"]) {
+			throw new InvalidCredentialsError();
+		}
+
+		const sql = `
+			select
+				usr.id as id
+			from
+				directus_users usr
+			join
+				customers_directus_users xref
+				on xref.directus_users_id = usr.id
+			join
+				customers cus
+				on cus.id = xref.customers_id
+			where
+				lower(usr.email) = '${ payload['email'].toLowerCase() }' and
+					lower(cus.alias) = '${ payload['customerAlias'].toLowerCase() }'
+      limit 1`;
+
+		const rawUser = await this.knex.raw(sql);
+		const user = rawUser.rows[0];
 
 		if (!user) {
 			throw new InvalidCredentialsError();
@@ -50,6 +67,7 @@ export function createLocalAuthRouter(provider: string): Router {
 	const userLoginSchema = Joi.object({
 		email: Joi.string().email().required(),
 		password: Joi.string().required(),
+		customerAlias: Joi.string().required(),
 		mode: Joi.string().valid('cookie', 'json'),
 		otp: Joi.string(),
 	}).unknown();
