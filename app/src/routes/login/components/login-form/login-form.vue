@@ -1,25 +1,3 @@
-<template>
-	<form @submit.prevent="onSubmit">
-		<v-input v-model="email" autofocus autocomplete="username" type="email" :placeholder="t('email')" />
-		<v-input v-model="customerAlias" autocomplete="customerAlias" type="text" style="text-transform:uppercase" :placeholder="t('customerAlias')" />
-		<v-input v-model="password" type="password" autocomplete="current-password" :placeholder="t('password')" />
-
-		<transition-expand>
-			<v-input v-if="requiresTFA" v-model="otp" type="text" :placeholder="t('otp')" autofocus />
-		</transition-expand>
-
-		<v-notice v-if="error" type="warning">
-			{{ errorFormatted }}
-		</v-notice>
-		<div class="buttons">
-			<v-button type="submit" :loading="loggingIn" large>{{ t('sign_in') }}</v-button>
-			<router-link to="/reset-password" class="forgot-password">
-				{{ t('forgot_password') }}
-			</router-link>
-		</div>
-	</form>
-</template>
-
 <script setup lang="ts">
 import { RequestError } from '@/api';
 import { login } from '@/auth';
@@ -31,7 +9,6 @@ import { useRouter } from 'vue-router';
 
 type Credentials = {
 	email: string;
-	customerAlias: string;
 	password: string;
 	otp?: string;
 };
@@ -47,7 +24,6 @@ const router = useRouter();
 const { provider } = toRefs(props);
 const loggingIn = ref(false);
 const email = ref<string | null>(null);
-const customerAlias = ref<string | null>(null);
 const password = ref<string | null>(null);
 const error = ref<RequestError | string | null>(null);
 const otp = ref<string | null>(null);
@@ -60,7 +36,6 @@ watch(email, () => {
 
 watch(provider, () => {
 	email.value = null;
-	customerAlias.value = null;
 	password.value = null;
 	error.value = null;
 	otp.value = null;
@@ -81,14 +56,13 @@ const errorFormatted = computed(() => {
 });
 
 async function onSubmit() {
-	if (email.value === null || customerAlias.value === null || password.value === null) return;
+	if (email.value === null || password.value === null) return;
 
 	try {
 		loggingIn.value = true;
 
 		const credentials: Credentials = {
 			email: email.value,
-			customerAlias: customerAlias.value,
 			password: password.value,
 		};
 
@@ -118,6 +92,27 @@ async function onSubmit() {
 	}
 }
 </script>
+
+<template>
+	<form @submit.prevent="onSubmit">
+		<v-input v-model="email" autofocus autocomplete="username" type="email" :placeholder="t('email')" />
+		<v-input v-model="password" type="password" autocomplete="current-password" :placeholder="t('password')" />
+
+		<transition-expand>
+			<v-input v-if="requiresTFA" v-model="otp" type="text" :placeholder="t('otp')" autofocus />
+		</transition-expand>
+
+		<v-notice v-if="error" type="warning">
+			{{ errorFormatted }}
+		</v-notice>
+		<div class="buttons">
+			<v-button type="submit" :loading="loggingIn" large>{{ t('sign_in') }}</v-button>
+			<router-link to="/reset-password" class="forgot-password">
+				{{ t('forgot_password') }}
+			</router-link>
+		</div>
+	</form>
+</template>
 
 <style lang="scss" scoped>
 .v-input,
